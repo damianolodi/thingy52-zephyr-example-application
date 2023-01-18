@@ -1,0 +1,5 @@
+# Build artifacts
+_build/
+
+# VSCode
+.vscode/.cortex-debug.registers.state.json

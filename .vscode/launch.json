@@ -1,0 +1,48 @@
+{
+    "version": "0.2.0",
+    "projectName": "zephyr-template",
+    "configurations": [
+        {
+            "name": "PyOCD Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "_build/zephyr/zephyr.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "pyocd",
+            "device": "nrf52832",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "targetId": "nrf52832",
+            "preLaunchTask": "Flash"
+        },
+        {
+            "name": "JLink Debug",
+            "cwd": "${workspaceFolder}",
+            "executable": "_build/zephyr/zephyr.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "rtos": "Zephyr",
+            "device": "nRF52832_xxAA",
+            "interface": "swd",
+            "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "preLaunchTask": "",
+            // "swoConfig": { // Single Wire Output configuration
+            //     "enabled": true,
+            //     "cpuFrequency": 0,
+            //     "swoFrequency": 0,
+            //     "source": "probe",
+            //     "decoders": [
+            //         {
+            //             "label": "",
+            //             "type": "console",
+            //             "port": 0,
+            //             "showOnStartup": true,
+            //             "encoding": "ascii"
+            //         }
+            //     ]
+            // }
+        }
+    ]
+}

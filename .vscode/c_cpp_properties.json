@@ -1,0 +1,23 @@
+{
+    "configurations": [
+        {
+            "name": "Linux",
+            "includePath": [
+                "${workspaceFolder}/**"
+            ],
+            "defines": [],
+            "compilerPath": "/usr/local/lib/zephyr-sdk-0.15.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gcc",
+            "cStandard": "c17",
+            "cppStandard": "c++17",
+            "intelliSenseMode": "linux-gcc-arm",
+            "compileCommands": "${workspaceFolder}/_build/compile_commands.json",
+            /// TODO: see what is this for
+            // "browse": {
+            //     "path": [],
+            //     "limitSymbolsToIncludedHeaders": true,
+            //     "databaseFilename": "${workspaceRoot}/.vscode/browse.vc.db"
+            // }
+        }
+    ],
+    "version": 4
+}

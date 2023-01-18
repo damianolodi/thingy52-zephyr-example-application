@@ -1,0 +1,7 @@
+{
+    "cortex-debug.gdbPath": "/usr/local/lib/zephyr-sdk-0.15.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
+    "cortex-debug.JLinkGDBServerPath": "/usr/bin/JLinkGDBServer",
+    "files.associations": {
+        "kernel.h": "c"
+    },
+}
