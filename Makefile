@@ -54,7 +54,7 @@ rconfig:
 dconfig:
 	make reconfig BUILD_TYPE=Debug
 
-# Manually Reconfigure a target, esp. with new options
+# Manually reconfigure a target, esp. with new options
 .PHONY: reconfig
 reconfig:
 	$(Q) cmake -B $(BUILDRESULTS) $(OPTIONS) $(INTERNAL_OPTIONS)
@@ -66,6 +66,15 @@ clean:
 .PHONY: pristine
 pristine:
 	$(Q) if [ -d "$(BUILDRESULTS)" ]; then ninja -C $(BUILDRESULTS) pristine; fi
+
+########################
+# File display helpers #
+########################
+
+# Open the board compiled devicetree file
+.PHONY: dts
+dts:
+	$(Q)code $(BUILDRESULTS)/zephyr/zephyr.dts
 
 .PHONY : help
 help :
@@ -79,9 +88,10 @@ help :
 	@echo "Targets:"
 	@echo "  default: 	builds all default targets ninja knows about"
 	@echo "  flash: 	flash the current board"
+	@echo "  cc: 		call ccmake in the build directory"
+	@echo "  dconfig: 	change build configuration to Debug"
+	@echo "  rconfig: 	change build configuration to Release"
+	@echo "  reconfig: 	reconfigure an existing build output folder with new settings"
 	@echo "  clean: 	cleans build artifacts, keeping build files in place"
 	@echo "  pristine: 	removes the configured build output directory. Keep the log file"
-	@echo "  cc: 		call ccmake in the build directory"
-	@echo "  rconfig: 	change build configuration to Release"
-	@echo "  dconfig: 	change build configuration to Debug"
-	@echo "  reconfig: 	reconfigure an existing build output folder with new settings"
+	@echo "  dts:		open the compiled devicetree file for the selected board"
