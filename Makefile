@@ -33,8 +33,7 @@ debug: | $(CONFIGURED_BUILD_DEP)
 
 .PHONY: flash
 flash: default
-	$(Q)nrfjprog -f nrf52 --program $(BUILDRESULTS)/zephyr/zephyr.elf --verify --sectorerase
-	$(Q)nrfjprog -f nrf52 --reset
+	$(Q)ninja -C $(BUILDRESULTS) flash
 
 # Runs whenever the build has not been configured successfully
 $(CONFIGURED_BUILD_DEP):
