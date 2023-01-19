@@ -5,7 +5,10 @@
 			"label": "Build",
 			"type": "shell",
 			"command": "make",
-			"group": "build",
+			"group": {
+				"kind": "build",
+				"isDefault": true
+			},
 		},
 		{
 			"label": "Flash",
