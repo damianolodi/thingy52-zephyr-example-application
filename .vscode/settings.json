@@ -12,6 +12,7 @@
     "cortex-debug.JLinkGDBServerPath": "/usr/bin/JLinkGDBServer",
     // Files ------------------------------------------------------------------
     "files.associations": {
-        "kernel.h": "c"
+        "kernel.h": "c",
+        "log.h": "c"
     },
 }

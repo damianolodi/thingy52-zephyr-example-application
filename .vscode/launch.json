@@ -27,7 +27,17 @@
             "interface": "swd",
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
-            "preLaunchTask": "",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "decoders": [
+                    {
+                        "label": "",
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
             // "swoConfig": { // Single Wire Output configuration
             //     "enabled": true,
             //     "cpuFrequency": 0,
