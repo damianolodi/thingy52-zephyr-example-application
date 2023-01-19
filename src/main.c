@@ -1,5 +1,8 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(pcs_weather, LOG_LEVEL_INF);
 
 #define SLEEP_TIME_MS 1000
 
