@@ -7,7 +7,7 @@
 
 LOG_MODULE_REGISTER(pcs_weather, LOG_LEVEL_DBG);
 
-#define BLINK_THREAD_STACKSIZE 512
+#define BLINK_THREAD_STACKSIZE 1024
 #define BLINK_THREAD_PRIORITY 4
 
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
@@ -18,33 +18,44 @@ static struct gpio_callback button_cb_data;
 static const struct i2c_dt_spec hts221_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(hts221));
 #endif
 
+K_FIFO_DEFINE(work_fifo);
+
 uint8_t read_buff[2] = {0};
 const uint8_t hts221_whoAmI = 0x0f;
 
-void blink_thread(void *p1, void *p2, void *p3) {
-    LOG_DBG("Blink thread started");
-    gpio_pin_toggle_dt(&led);
+void blink_thread() {
+    int irq_lock_key;
 
+    while (1) {
+        k_fifo_get(&work_fifo, K_FOREVER);
+
+        irq_lock_key = irq_lock();
+
+        LOG_DBG("Blink thread started");
+        gpio_pin_toggle_dt(&led);
 #if ENABLE_HTS221
-    int err = i2c_write_read_dt(&hts221_i2c, &hts221_whoAmI, 1, read_buff, 1);
-    if (err != 0)
-        LOG_DBG("Error %d: failed to write/read I2C device address %x at reg. %x n", err, hts221_i2c.addr,
-                hts221_whoAmI);
-    else
-        LOG_INF("I2C %x device name: %x", hts221_i2c.addr, read_buff[0]);
+        int err = i2c_write_read_dt(&hts221_i2c, &hts221_whoAmI, 1, read_buff, 1);
+        if (err != 0)
+            LOG_DBG("Error %d: failed to write/read I2C device address %x at reg. %x n", err, hts221_i2c.addr,
+                    hts221_whoAmI);
+        else
+            LOG_INF("I2C %x device name: %x", hts221_i2c.addr, read_buff[0]);
 #endif
+        gpio_pin_toggle_dt(&led);
+        LOG_DBG("Blink thread ended");
 
-    k_msleep(200);
-    gpio_pin_toggle_dt(&led);
-    LOG_DBG("Blink thread ended");
-    k_yield();
+        irq_unlock(irq_lock_key);
+    }
 }
 
-K_THREAD_STACK_DEFINE(blink_thread_stack_area, BLINK_THREAD_STACKSIZE);
-struct k_thread blink_thread_data;
+struct data_item_t {
+    void *fifo_reserved; /* 1st word reserved for use by FIFO */
+};
+
+struct data_item_t work_data;
+
 void button_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
-    k_thread_create(&blink_thread_data, blink_thread_stack_area, K_THREAD_STACK_SIZEOF(blink_thread_stack_area),
-                    blink_thread, NULL, NULL, NULL, BLINK_THREAD_PRIORITY, 0, K_NO_WAIT);
+    k_fifo_put(&work_fifo, &work_data);
 }
 
 // ----------------------------------------------------------------------------
@@ -99,3 +110,5 @@ int main() {
 
     return 0;
 }
+
+K_THREAD_DEFINE(work_thread, BLINK_THREAD_STACKSIZE, blink_thread, NULL, NULL, NULL, BLINK_THREAD_PRIORITY, 0, 0);
