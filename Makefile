@@ -69,7 +69,7 @@ clean:
 
 .PHONY: pristine
 pristine:
-	$(Q) if [ -d "$(BUILDRESULTS)" ]; then ninja -C $(BUILDRESULTS) pristine; fi
+	$(Q) rm -rf $(BUILDRESULTS)
 
 #################
 # Board targets #
