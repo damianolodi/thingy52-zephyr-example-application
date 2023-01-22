@@ -1,18 +1,15 @@
 # Set a defualt board in case none is selected
-if (NOT BOARD_ID)
-    set(BOARD_ID "thingy52" CACHE
-        STRING "Choose target board."
-        FORCE)
+if (NOT BOARD)
+    set(BOARD "thingy52_nrf52832") 
 endif()
 
-# Set the possible board names based based on project support
-set_property(CACHE BOARD_ID
-    PROPERTY STRINGS "thingy52" "myboard"
-)
-
 # Select the correct directory based on the board name
-if (BOARD_ID STREQUAL "thingy52")
-    add_subdirectory(arm/thingy52)
-elseif(BOARD_ID STREQUAL "myboard")
-    add_subdirectory(arm/myboard)
+if (BOARD STREQUAL "thingy52_nrf52832")
+    message(NOTICE "Select BOARD Thingy52")
+    add_subdirectory(arm/thingy52_nrf52832)
+elseif(BOARD STREQUAL "nrf52840dk_nrf52840")
+    message(NOTICE "Select BOARD nRF52840DK")
+    add_subdirectory(arm/nrf52840dk_nrf52840)
+else()
+    message(FATAL_ERROR "Selected board is not supported. Add your board to boards/CMakeLists.txt")
 endif()

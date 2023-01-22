@@ -1,0 +1,1 @@
+# Thingy52 board is supported by default in Zephyr
