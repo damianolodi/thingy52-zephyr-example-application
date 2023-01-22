@@ -43,4 +43,4 @@ project(zephyr-template
 set_property(GLOBAL PROPERTY C_STANDARD 11)
 set_property(GLOBAL PROPERTY CXX_STANDARD 17)
 
-target_sources(app PRIVATE src/main.cpp)
+target_sources(app PRIVATE src/main.c)
