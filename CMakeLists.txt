@@ -4,7 +4,13 @@ cmake_minimum_required(VERSION 3.20.0)
 # Process Boards #
 ##################
 
-add_subdirectory(boards)
+list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/prj.conf)
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/debug.conf)
+endif()
+
+include(cmake/select_board.cmake)
 
 #################
 # Build Modules #
@@ -12,12 +18,6 @@ add_subdirectory(boards)
 
 # Define and Process Project Options
 include(BuildOptions.cmake)
-
-list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/prj.conf)
-
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/debug.conf)
-endif()
 
 ##########
 # ZEPHYR #
