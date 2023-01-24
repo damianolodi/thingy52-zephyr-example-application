@@ -16,7 +16,7 @@
             "preLaunchTask": "Flash",
         },
         {
-            "name": "JLink Debug",
+            "name": "JLink nRF52832 (RTT)",
             "cwd": "${workspaceFolder}",
             "executable": "_build/zephyr/zephyr.elf",
             "request": "launch",
@@ -54,6 +54,20 @@
             //         }
             //     ]
             // }
+        },
+        {
+            "name": "JLink nRF52840",
+            "cwd": "${workspaceFolder}",
+            "executable": "_build/zephyr/zephyr.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "rtos": "Zephyr",
+            "device": "nRF52840_xxAA",
+            "interface": "swd",
+            // "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "preLaunchTask": "Flash",
         }
     ]
 }
