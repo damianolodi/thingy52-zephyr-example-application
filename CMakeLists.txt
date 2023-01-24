@@ -8,6 +8,7 @@ list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/prj.conf)
 
 if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
 	list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/debug.conf)
+	add_compile_definitions(DEBUG)
 endif()
 
 include(cmake/select_board.cmake)

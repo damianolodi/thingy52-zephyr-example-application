@@ -3,9 +3,15 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#if DEBUG
+#define LOG_LEVEL LOG_LEVEL_DBG
+#else
+#define LOG_LEVEL LOG_LEVEL_WRN
+#endif
+
 #define ENABLE_HTS221 DT_NODE_HAS_STATUS(DT_NODELABEL(hts221), okay)
 
-LOG_MODULE_REGISTER(pcs_weather, LOG_LEVEL_DBG);
+LOG_MODULE_REGISTER(pcs_weather, LOG_LEVEL);
 
 #define BLINK_THREAD_STACKSIZE 1024
 #define BLINK_THREAD_PRIORITY 4
