@@ -16,6 +16,8 @@ LOG_MODULE_REGISTER(pcs_weather, LOG_LEVEL);
 #define BLINK_THREAD_STACKSIZE 1024
 #define BLINK_THREAD_PRIORITY 4
 
+K_EVENT_DEFINE(button_event);
+
 static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(DT_ALIAS(led0), gpios);
 static const struct gpio_dt_spec button = GPIO_DT_SPEC_GET_OR(DT_ALIAS(sw0), gpios, {0});
 static struct gpio_callback button_cb_data;
@@ -24,18 +26,12 @@ static struct gpio_callback button_cb_data;
 static const struct i2c_dt_spec hts221_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(hts221));
 #endif
 
-K_FIFO_DEFINE(work_fifo);
-
 uint8_t read_buff[2] = {0};
 const uint8_t hts221_whoAmI = 0x0f;
 
 void blink_thread() {
-    int irq_lock_key;
-
     while (1) {
-        k_fifo_get(&work_fifo, K_FOREVER);
-
-        irq_lock_key = irq_lock();
+        k_event_wait(&button_event, 0x001, true, K_FOREVER);
 
         LOG_DBG("Blink thread started");
         gpio_pin_toggle_dt(&led);
@@ -49,19 +45,11 @@ void blink_thread() {
 #endif
         gpio_pin_toggle_dt(&led);
         LOG_DBG("Blink thread ended");
-
-        irq_unlock(irq_lock_key);
     }
 }
 
-struct data_item_t {
-    void *fifo_reserved; /* 1st word reserved for use by FIFO */
-};
-
-struct data_item_t work_data;
-
 void button_isr(const struct device *dev, struct gpio_callback *cb, uint32_t pins) {
-    k_fifo_put(&work_fifo, &work_data);
+    k_event_post(&button_event, 0x001);
 }
 
 // ----------------------------------------------------------------------------
