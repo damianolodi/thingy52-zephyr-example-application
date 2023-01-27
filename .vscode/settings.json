@@ -10,12 +10,14 @@
     // Cortex Debug -----------------------------------------------------------
     "cortex-debug.gdbPath": "/usr/local/lib/zephyr-sdk-0.15.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
     "cortex-debug.JLinkGDBServerPath": "/usr/bin/JLinkGDBServer",
+    "cortex-debug.variableUseNaturalFormat": false,
     // Files ------------------------------------------------------------------
     "files.associations": {
         "kernel.h": "c",
         "log.h": "c",
         "printk.h": "c",
         "type_traits": "cpp",
-        "i2c.h": "c"
+        "i2c.h": "c",
+        "types.h": "c"
     },
 }

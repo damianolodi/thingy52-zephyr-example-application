@@ -3,11 +3,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
-#if DEBUG
-#define LOG_LEVEL LOG_LEVEL_DBG
-#else
-#define LOG_LEVEL LOG_LEVEL_WRN
-#endif
+#include "config_hts221.h"
+#include "config_log.h"
+#include "hts221/hts221.h"
 
 #define ENABLE_HTS221 DT_NODE_HAS_STATUS(DT_NODELABEL(hts221), okay)
 
@@ -27,21 +25,22 @@ static const struct i2c_dt_spec hts221_i2c = I2C_DT_SPEC_GET(DT_NODELABEL(hts221
 #endif
 
 uint8_t read_buff[2] = {0};
-const uint8_t hts221_whoAmI = 0x0f;
 
 void blink_thread() {
+    int err;
+    float humidity, temperature;
+
     while (1) {
         k_event_wait(&button_event, 0x001, true, K_FOREVER);
 
         LOG_DBG("Blink thread started");
         gpio_pin_toggle_dt(&led);
 #if ENABLE_HTS221
-        int err = i2c_write_read_dt(&hts221_i2c, &hts221_whoAmI, 1, read_buff, 1);
+        err = hts221_read_all(&hts221_i2c, &humidity, &temperature);
         if (err != 0)
-            LOG_DBG("Error %d: failed to write/read I2C device address %x at reg. %x n", err, hts221_i2c.addr,
-                    hts221_whoAmI);
+            LOG_DBG("Error %d: failed to read %x I2C device humidity.", err, hts221_i2c.addr);
         else
-            LOG_INF("I2C %x device name: %x", hts221_i2c.addr, read_buff[0]);
+            LOG_INF("HTS221, humidity = %f, temperature = %f", humidity, temperature);
 #endif
         gpio_pin_toggle_dt(&led);
         LOG_DBG("Blink thread ended");
@@ -89,17 +88,14 @@ int main() {
 
     err = gpio_pin_interrupt_configure_dt(&button, GPIO_INT_EDGE_TO_ACTIVE);
     if (err < 0) {
-        LOG_DBG("Error during button ISR configuration: %u", err);
+        LOG_DBG("Error during button ISR configuration: %u.", err);
         return 1;
     }
     gpio_init_callback(&button_cb_data, button_isr, BIT(button.pin));
     gpio_add_callback(button.port, &button_cb_data);
 
 #if ENABLE_HTS221
-    err = i2c_write_read_dt(&hts221_i2c, &hts221_whoAmI, 1, read_buff, 1);
-    if (err != 0)
-        LOG_DBG("Failed to write/read I2C device address %x at Reg. %x n", hts221_i2c.addr, read_buff[0]);
-    LOG_INF("I2C %x device name: %x", hts221_i2c.addr, read_buff[0]);
+    config_hts221(&hts221_i2c);
 #endif
 
     return 0;
