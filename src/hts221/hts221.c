@@ -124,7 +124,12 @@ int hts221_read_heater_status(const struct i2c_dt_spec *spec, bool *is_enabled) 
 }
 
 int hts221_start_one_shot_conversion(const struct i2c_dt_spec *spec) {
-    return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG2, 0b00000001);
+    uint8_t ctrl_reg2_value;
+    int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG2, &ctrl_reg2_value);
+    if (err != 0)
+        return err;
+
+    return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG2, (ctrl_reg2_value & 0b11111110) | 0x1);
 }
 
 int hts221_config_data_ready(const struct i2c_dt_spec *spec, const bool active_low) {
@@ -168,11 +173,11 @@ int hts221_read_all_config_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf,
     if (err != 0)
         return err;
 
-    err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, ctrl_reg2);
+    err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG2, ctrl_reg2);
     if (err != 0)
         return err;
 
-    err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, ctrl_reg3);
+    err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG3, ctrl_reg3);
     if (err != 0)
         return err;
 
