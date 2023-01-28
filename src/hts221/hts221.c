@@ -41,6 +41,24 @@ int hts221_set_avg_config(const struct i2c_dt_spec *spec, const hts221_avg_confi
     return i2c_write_dt(spec, regs, 2);
 }
 
+int hts221_set_active_mode(const struct i2c_dt_spec *spec) {
+    uint8_t ctrl_reg1_value;
+    int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, &ctrl_reg1_value);
+    if (err != 0)
+        return err;
+
+    return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG1, (ctrl_reg1_value & 0b01111111) | 0b10000000);
+}
+
+int hts221_set_power_down_mode(const struct i2c_dt_spec *spec) {
+    uint8_t ctrl_reg1_value;
+    int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, &ctrl_reg1_value);
+    if (err != 0)
+        return err;
+
+    return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG1, ctrl_reg1_value & 0b01111111);
+}
+
 int hts221_set_odr(const struct i2c_dt_spec *spec, const hts221_odr_config_t odr_conf) {
     uint8_t ctrl_reg1_value;
     int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, &ctrl_reg1_value);

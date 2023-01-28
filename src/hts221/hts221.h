@@ -47,6 +47,10 @@ int hts221_read_avg_config(const struct i2c_dt_spec *spec, uint8_t *temp_conf, u
 int hts221_set_avg_config(const struct i2c_dt_spec *spec, const hts221_avg_config_t temp_conf,
                           const hts221_avg_config_t humidity_conf);
 
+int hts221_set_active_mode(const struct i2c_dt_spec *spec);
+
+int hts221_set_power_down_mode(const struct i2c_dt_spec *spec);
+
 int hts221_set_odr(const struct i2c_dt_spec *spec, const hts221_odr_config_t odr_conf);
 
 int hts221_read_odr(const struct i2c_dt_spec *spec, hts221_odr_config_t *odr_conf);
