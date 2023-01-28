@@ -1,0 +1,12 @@
+#ifndef EVENTS_H
+#define EVENTS_H
+
+typedef enum {
+    EVENT_LED_BLINK = 0b1,
+    EVENT_HTS221_READ_TEMP = 0b10,
+    EVENT_HTS221_READ_RH = 0b100,
+    EVENT_HTS221_READ_ALL = 0b1000,
+    EVENT_HTS221_DATA_READY = 0b10000,
+} event_t;
+
+#endif
