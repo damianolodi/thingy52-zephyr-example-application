@@ -49,7 +49,7 @@ void hts221_thread() {
         k_event_post(&events, EVENT_LED_BLINK);
 
 #if ENABLE_HTS221
-        LOG_ERR("DRDY_PIN value: %d", gpio_pin_get_dt(&hts221_drdy));
+        // LOG_ERR("DRDY_PIN value: %d", gpio_pin_get_dt(&hts221_drdy));
         err = hts221_start_one_shot_conversion(&hts221_i2c);
         if (err != 0) {
             LOG_DBG("Error %d: failed to start HTS221 (I2C@%x) one-shot conversion.", err, hts221_i2c.addr);
@@ -66,7 +66,6 @@ void hts221_thread() {
         // LOG_INF("HTS221 (I2C@%x), humidity ready = %d, temp ready = %d", hts221_i2c.addr, humidity_available,
         //         temp_available);
 
-        LOG_ERR("DRDY_PIN value: %d", gpio_pin_get_dt(&hts221_drdy));
         LOG_INF("HTS221 (I2C@%x), read new data. Events = 0x%x", hts221_i2c.addr, events.events);
         err = hts221_read_all(&hts221_i2c, &humidity, &temperature);
         if (err != 0) {
@@ -135,15 +134,13 @@ int main() {
     gpio_add_callback(button.port, &button_cb_data);
 
 #if ENABLE_HTS221
-    LOG_ERR("DRDY_PIN value: %d", gpio_pin_get_dt(&hts221_drdy));
-
     err = gpio_pin_configure_dt(&hts221_drdy, GPIO_INPUT);
     if (err < 0) {
         LOG_DBG("Error during HTS221 DRDY pin configuration.");
         return 1;
     }
 
-    err = gpio_pin_interrupt_configure_dt(&hts221_drdy, GPIO_INT_EDGE_BOTH);
+    err = gpio_pin_interrupt_configure_dt(&hts221_drdy, GPIO_INT_EDGE_TO_ACTIVE);
     if (err < 0) {
         LOG_DBG("Error %u during HTS221 DRDY ISR configuration.", err);
         return 1;
@@ -153,9 +150,7 @@ int main() {
 #endif
 
 #if ENABLE_HTS221
-    LOG_ERR("DRDY_PIN value: %d", gpio_pin_get_dt(&hts221_drdy));
     config_hts221(&hts221_i2c);
-    LOG_ERR("DRDY_PIN value: %d", gpio_pin_get_dt(&hts221_drdy));
 #endif
 
     return 0;
