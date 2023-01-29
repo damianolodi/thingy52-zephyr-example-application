@@ -44,7 +44,12 @@ project(zephyr-template
 set_property(GLOBAL PROPERTY C_STANDARD 11)
 set_property(GLOBAL PROPERTY CXX_STANDARD 17)
 
-target_sources(app PRIVATE src/main.c src/hts221/hts221.c)
+target_sources(app PRIVATE 
+	src/main.c 
+	src/thread_hts221.c 
+	src/thread_led.c
+	src/hts221/hts221.c
+)
 
 target_include_directories(app PRIVATE src)
 target_include_directories(app PRIVATE src src/hts221)
