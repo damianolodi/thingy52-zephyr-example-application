@@ -18,6 +18,12 @@
         "printk.h": "c",
         "type_traits": "cpp",
         "i2c.h": "c",
-        "types.h": "c"
+        "types.h": "c",
+        "gpio.h": "c",
+        "thread_led.h": "c",
+        "config_hts221.h": "c",
+        "config_log.h": "c",
+        "events.h": "c",
+        "hts221.h": "c"
     },
 }
