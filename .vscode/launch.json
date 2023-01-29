@@ -27,7 +27,7 @@
             "interface": "swd",
             // "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
-            "preLaunchTask": "Flash",
+            // "preLaunchTask": "Flash",
             "rttConfig": {
                 "enabled": true,
                 "address": "auto",
