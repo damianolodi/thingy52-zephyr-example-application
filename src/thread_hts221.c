@@ -53,8 +53,7 @@ int hts221_thread() {
      *
      * If the pin is not set inactive before calling 'k_event_wait', the app will not work properly.
      */
-    if (events.events & EVENT_HTS221_DATA_READY)
-        hts221_read_all(&hts221_i2c, &humidity, &temperature);
+    hts221_read_all(&hts221_i2c, &temperature, &humidity);
 
     while (1) {  // ---------------------------------------------------------------------------------------------------
         k_event_set_masked(&events, 0, EVENT_HTS221_READ_ALL | EVENT_HTS221_DATA_READY);  // Clear events before waiting
@@ -74,7 +73,7 @@ int hts221_thread() {
         }
 
         LOG_DBG("HTS221 (I2C@%x), read new data. Events = 0x%x", hts221_i2c.addr, events.events);
-        err = hts221_read_all(&hts221_i2c, &humidity, &temperature);
+        err = hts221_read_all(&hts221_i2c, &temperature, &humidity);
         if (err != 0) {
             LOG_ERR("Error %d: failed to read HTS221 (I2C@%x) data.", err, hts221_i2c.addr);
             continue;

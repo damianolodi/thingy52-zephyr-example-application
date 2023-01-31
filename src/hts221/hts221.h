@@ -96,9 +96,9 @@ int hts221_read_all_conf_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf, u
  * Data Conversion *
  *******************/
 
-int hts221_read_humidity(const struct i2c_dt_spec *spec, float *humidity);
-
 int hts221_read_temperature(const struct i2c_dt_spec *spec, float *temperature);
+
+int hts221_read_humidity(const struct i2c_dt_spec *spec, float *humidity);
 
 int hts221_read_all(const struct i2c_dt_spec *spec, float *humidity, float *temperature);
 

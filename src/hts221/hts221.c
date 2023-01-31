@@ -1,26 +1,16 @@
 #include "hts221.h"
 
-struct Hts221_Conv_Coeff {
+struct Hts221_calibration_coeff {
     // Temperature
-    uint16_t t0_degC_x8;
-    uint16_t t1_degC_x8;
-    int16_t t0_out;
-    int16_t t1_out;
-
     float t_m;
     float t_q;
 
     // Humidity
-    uint8_t h0_rh_x2;
-    uint8_t h1_rh_x2;
-    int16_t h0_t0_out;
-    int16_t h1_t0_out;
-
     float rh_m;
     float rh_q;
 };
 
-static struct Hts221_Conv_Coeff conv_coeff;
+static struct Hts221_calibration_coeff calibration_coeff;
 
 int hts221_read_whoami(const struct i2c_dt_spec *spec, uint8_t *read_buf) {
     return i2c_reg_read_byte_dt(spec, HTS221_WHO_AM_I, read_buf);
@@ -198,38 +188,50 @@ int hts221_read_all_conf_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf, u
  * Data Conversion *
  *******************/
 
-int hts221_read_humidity(const struct i2c_dt_spec *spec, float *humidity) {
-    const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | HTS221_MULTIPLE_BYTES_READ;
-    uint8_t buffer[2];
-    const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 2);
-    if (err != 0)
-        return err;
-    *humidity = buffer[1] << 8 | buffer[0];
-    return 0;
-}
-
 int hts221_read_temperature(const struct i2c_dt_spec *spec, float *temperature) {
     const hts221_reg_t reg = HTS221_TEMP_OUT_L | HTS221_MULTIPLE_BYTES_READ;
     uint8_t buffer[2];
     const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 2);
     if (err != 0)
         return err;
-    *temperature = buffer[1] << 8 | buffer[0];
+
+    const int16_t temp_x8 = ((buffer[1] & 0b00000011) << 8) | buffer[0];
+    *temperature = (float)temp_x8 * calibration_coeff.t_m + calibration_coeff.t_q;
+    *temperature /= 8.f;
+
     return 0;
 }
 
-int hts221_read_all(const struct i2c_dt_spec *spec, float *humidity, float *temperature) {
+int hts221_read_humidity(const struct i2c_dt_spec *spec, float *humidity) {
+    const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | HTS221_MULTIPLE_BYTES_READ;
+    uint8_t buffer[2];
+    const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 2);
+    if (err != 0)
+        return err;
+
+    const int16_t humidity_x2 = ((buffer[1] & 0b00000011) << 8) | buffer[0];
+    *humidity = (float)humidity_x2 * calibration_coeff.rh_m + calibration_coeff.rh_q;
+    *humidity /= 2.f;
+
+    return 0;
+}
+
+int hts221_read_all(const struct i2c_dt_spec *spec, float *temperature, float *humidity) {
     const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | HTS221_MULTIPLE_BYTES_READ;
     uint8_t buffer[4];
     const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 4);
     if (err != 0)
         return err;
-    *humidity = buffer[1] << 8 | buffer[0];
 
-    const int16_t temp_x8 = (buffer[3] << 8) | buffer[2];
+    const int16_t temp_x8 = ((buffer[3] & 0b00000011) << 8) | buffer[2];
+    const int16_t humidity_x2 = ((buffer[1] & 0b00000011) << 8) | buffer[0];
 
-    *temperature = (float)temp_x8 * conv_coeff.t_m + conv_coeff.t_q;
+    *temperature = (float)temp_x8 * calibration_coeff.t_m + calibration_coeff.t_q;
     *temperature /= 8.f;
+
+    *humidity = (float)humidity_x2 * calibration_coeff.rh_m + calibration_coeff.rh_q;
+    *humidity /= 2.f;
+
     return 0;
 }
 
@@ -240,25 +242,23 @@ int hts221_read_calibration(const struct i2c_dt_spec *spec) {
     if (err != 0)
         return err;
 
-    // Humidity
-    conv_coeff.h0_rh_x2 = buffer[0];
-    conv_coeff.h1_rh_x2 = buffer[1];
-    conv_coeff.h0_t0_out = (buffer[7] << 8) | buffer[6];
-    conv_coeff.h1_t0_out = (buffer[9] << 8) | buffer[8];
-
-    conv_coeff.rh_m = (float)(conv_coeff.h1_rh_x2 - conv_coeff.h0_rh_x2) /  //
-                      (float)(conv_coeff.h1_t0_out - conv_coeff.h0_t0_out);
-    conv_coeff.rh_q = (float)(conv_coeff.h1_rh_x2) - (float)conv_coeff.h1_t0_out * conv_coeff.rh_m;
-
     // Temperature
-    conv_coeff.t0_degC_x8 = ((buffer[5] & 0b00000011) << 8) | buffer[2];
-    conv_coeff.t1_degC_x8 = ((buffer[5] & 0b00001100) << 6) | buffer[3];
-    conv_coeff.t0_out = (buffer[13] << 8) | buffer[12];
-    conv_coeff.t1_out = (buffer[15] << 8) | buffer[14];
+    const uint16_t t0_degC_x8 = ((buffer[5] & 0b00000011) << 8) | buffer[2];
+    const uint16_t t1_degC_x8 = ((buffer[5] & 0b00001100) << 6) | buffer[3];
+    const int16_t t0_out = (buffer[13] << 8) | buffer[12];
+    const int16_t t1_out = (buffer[15] << 8) | buffer[14];
 
-    conv_coeff.t_m = (float)(conv_coeff.t1_degC_x8 - conv_coeff.t0_degC_x8) /  //
-                     (float)(conv_coeff.t1_out - conv_coeff.t0_out);
-    conv_coeff.t_q = (float)(conv_coeff.t1_degC_x8) - (float)conv_coeff.t1_out * conv_coeff.t_m;
+    calibration_coeff.t_m = (float)(t1_degC_x8 - t0_degC_x8) / (float)(t1_out - t0_out);
+    calibration_coeff.t_q = (float)t1_degC_x8 - (float)t1_out * calibration_coeff.t_m;
+
+    // Humidity
+    const uint8_t h0_rh_x2 = buffer[0];
+    const uint8_t h1_rh_x2 = buffer[1];
+    const int16_t h0_t0_out = (buffer[7] << 8) | buffer[6];
+    const int16_t h1_t0_out = (buffer[9] << 8) | buffer[8];
+
+    calibration_coeff.rh_m = (float)(h1_rh_x2 - h0_rh_x2) / (float)(h1_t0_out - h0_t0_out);
+    calibration_coeff.rh_q = (float)h1_rh_x2 - (float)h1_t0_out * calibration_coeff.rh_m;
 
     return 0;
 }
