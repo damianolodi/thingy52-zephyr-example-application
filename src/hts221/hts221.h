@@ -4,6 +4,8 @@
 #include <stdint.h>
 #include <zephyr/drivers/i2c.h>
 
+#define HTS221_MULTIPLE_BYTES_READ 0b10000000
+
 typedef enum {
     HTS221_WHO_AM_I = 0x0f,        // r
     HTS221_AV_CONF = 0x10,         // r/w
@@ -27,7 +29,7 @@ typedef enum {                   // T[#]  RH[#] [nr. of internal average]
     HTS221_AVG_CONFIG_5 = 0x05,  //  64    128
     HTS221_AVG_CONFIG_6 = 0x06,  // 128    256
     HTS221_AVG_CONFIG_7 = 0x07,  // 256    512
-} hts221_avg_config_t;
+} hts221_av_conf_t;
 
 typedef enum {
     HTS221_ODR_ONE_SHOT = 0x00,  // one shot mode
@@ -36,20 +38,36 @@ typedef enum {
     HTS221_ODR_12_5_HZ = 0x03,   // 12.5 Hz
 } hts221_odr_config_t;
 
+/**
+ * @brief Read the content of the WHO_AM_I register.
+ *
+ * @param spec I2C specification from devicetree.
+ * @param read_buf Pointer to the variable that stores the read data.
+ *
+ * @return a value from i2c_write_read_dt()
+ */
 int hts221_read_whoami(const struct i2c_dt_spec *spec, uint8_t *read_buf);
 
 /************************
  * Sensor Configuration *
  ************************/
 
-int hts221_read_avg_config(const struct i2c_dt_spec *spec, uint8_t *temp_conf, uint8_t *humidity_conf);
+/**
+ * @brief Read the AV_CONF register and return both temperature and humidity averaged samples configurations.
+ *
+ * @param spec I2C specification from devicetree.
+ * @param temp_conf Pointer to the variable that stores the read temperature configuration.
+ * @param humidity_conf Pointer to the variable that stores the read humidity configuration.
+ * @return int
+ */
+int hts221_read_av_conf(const struct i2c_dt_spec *spec, hts221_av_conf_t *temp_conf, hts221_av_conf_t *humidity_conf);
 
-int hts221_set_avg_config(const struct i2c_dt_spec *spec, const hts221_avg_config_t temp_conf,
-                          const hts221_avg_config_t humidity_conf);
+int hts221_set_av_conf(const struct i2c_dt_spec *spec, const hts221_av_conf_t temp_conf,
+                       const hts221_av_conf_t humidity_conf);
 
-int hts221_set_active_mode(const struct i2c_dt_spec *spec);
+int hts221_enable(const struct i2c_dt_spec *spec);
 
-int hts221_set_power_down_mode(const struct i2c_dt_spec *spec);
+int hts221_disable(const struct i2c_dt_spec *spec);
 
 int hts221_set_odr(const struct i2c_dt_spec *spec, const hts221_odr_config_t odr_conf);
 
@@ -63,27 +81,27 @@ int hts221_set_heater_status(const struct i2c_dt_spec *spec, const bool enable);
 
 int hts221_read_heater_status(const struct i2c_dt_spec *spec, bool *is_enabled);
 
-int hts221_start_one_shot_conversion(const struct i2c_dt_spec *spec);
+int hts221_trigger_one_shot(const struct i2c_dt_spec *spec);
 
 int hts221_config_data_ready(const struct i2c_dt_spec *spec, const bool active_low);
 
 int hts221_enable_data_ready(const struct i2c_dt_spec *spec, const bool enable);
 
-int hts221_read_status_reg(const struct i2c_dt_spec *spec, bool *new_humidity_available, bool *new_temp_available);
+int hts221_read_status(const struct i2c_dt_spec *spec, bool *new_humidity_available, bool *new_temp_available);
 
-int hts221_read_all_config_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf, uint8_t *ctrl_reg1, uint8_t *ctrl_reg2,
-                               uint8_t *ctrl_reg3, uint8_t *status_reg);
+int hts221_read_all_conf_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf, uint8_t *ctrl_reg1, uint8_t *ctrl_reg2,
+                             uint8_t *ctrl_reg3, uint8_t *status_reg);
 
 /*******************
  * Data Conversion *
  *******************/
 
-int hts221_read_humidity(const struct i2c_dt_spec *spec, uint16_t *humidity);
+int hts221_read_humidity(const struct i2c_dt_spec *spec, float *humidity);
 
-int hts221_read_temperature(const struct i2c_dt_spec *spec, uint16_t *temperature);
+int hts221_read_temperature(const struct i2c_dt_spec *spec, float *temperature);
 
 int hts221_read_all(const struct i2c_dt_spec *spec, float *humidity, float *temperature);
 
-int hts221_read_conversion_coeff(const struct i2c_dt_spec *spec);
+int hts221_read_calibration(const struct i2c_dt_spec *spec);
 
 #endif

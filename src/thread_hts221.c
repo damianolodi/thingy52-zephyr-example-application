@@ -61,7 +61,7 @@ int hts221_thread() {
         k_event_wait(&events, EVENT_HTS221_READ_ALL, false, K_FOREVER);
         k_event_post(&events, EVENT_LED_BLINK);
 
-        err = hts221_start_one_shot_conversion(&hts221_i2c);
+        err = hts221_trigger_one_shot(&hts221_i2c);
         if (err != 0) {
             LOG_ERR("Error %d: failed to start HTS221 (I2C@%x) one-shot conversion.", err, hts221_i2c.addr);
             continue;
@@ -138,7 +138,7 @@ int config_hts221(const struct i2c_dt_spec *hts221_i2c) {
         return 1;
     }
 
-    int err = hts221_set_avg_config(hts221_i2c, HTS221_AVG_CONFIG_2, HTS221_AVG_CONFIG_2);
+    int err = hts221_set_av_conf(hts221_i2c, HTS221_AVG_CONFIG_2, HTS221_AVG_CONFIG_2);
     if (err != 0) {
         LOG_DBG("Failed to write HTS221 (I2C@%x) avg configuration.", hts221_i2c->addr);
         return 1;
@@ -162,14 +162,14 @@ int config_hts221(const struct i2c_dt_spec *hts221_i2c) {
         return 1;
     }
 
-    err = hts221_read_conversion_coeff(hts221_i2c);
+    err = hts221_read_calibration(hts221_i2c);
     if (err != 0) {
         LOG_DBG("Failed to read HTS221 (I2C@%x) conversion coefficients.", hts221_i2c->addr);
         return 1;
     }
     LOG_INF("HTS221 (I2C@%x) conversion coefficients read correctly.", hts221_i2c->addr);
 
-    err = hts221_set_active_mode(hts221_i2c);
+    err = hts221_enable(hts221_i2c);
     if (err != 0) {
         LOG_DBG("Failed to activate HTS221 (I2C@%x).", hts221_i2c->addr);
         return 1;
@@ -177,7 +177,7 @@ int config_hts221(const struct i2c_dt_spec *hts221_i2c) {
 
 #if DEBUG
     uint8_t av_conf_reg, ctrl_reg1, ctrl_reg2, ctrl_reg3, status_reg;
-    err = hts221_read_all_config_reg(hts221_i2c, &av_conf_reg, &ctrl_reg1, &ctrl_reg2, &ctrl_reg3, &status_reg);
+    err = hts221_read_all_conf_reg(hts221_i2c, &av_conf_reg, &ctrl_reg1, &ctrl_reg2, &ctrl_reg3, &status_reg);
     if (err != 0) {
         LOG_DBG("Failed to read HTS221 (I2C@%x) config registers.", hts221_i2c->addr);
         return 1;

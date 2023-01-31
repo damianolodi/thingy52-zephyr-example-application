@@ -1,47 +1,53 @@
 #include "hts221.h"
 
 struct Hts221_Conv_Coeff {
+    // Temperature
     uint16_t t0_degC_x8;
     uint16_t t1_degC_x8;
-
     int16_t t0_out;
     int16_t t1_out;
 
     float t_m;
     float t_q;
+
+    // Humidity
+    uint8_t h0_rh_x2;
+    uint8_t h1_rh_x2;
+    int16_t h0_t0_out;
+    int16_t h1_t0_out;
+
+    float rh_m;
+    float rh_q;
 };
 
 static struct Hts221_Conv_Coeff conv_coeff;
 
 int hts221_read_whoami(const struct i2c_dt_spec *spec, uint8_t *read_buf) {
-    const hts221_reg_t reg = HTS221_WHO_AM_I;
-    return i2c_write_read_dt(spec, &reg, 1, read_buf, 1);
+    return i2c_reg_read_byte_dt(spec, HTS221_WHO_AM_I, read_buf);
 }
 
 /************************
  * Sensor Configuration *
  ************************/
 
-int hts221_read_avg_config(const struct i2c_dt_spec *spec, uint8_t *temp_conf, uint8_t *humidity_conf) {
-    const hts221_reg_t reg = HTS221_AV_CONF;
-    uint8_t answer;
-    int err = i2c_write_read_dt(spec, &reg, 1, &answer, 1);
+int hts221_read_av_conf(const struct i2c_dt_spec *spec, hts221_av_conf_t *temp_conf, hts221_av_conf_t *humidity_conf) {
+    uint8_t av_conf_value;
+    int err = i2c_reg_read_byte_dt(spec, HTS221_AV_CONF, &av_conf_value);
     if (err != 0)
         return err;
 
-    *temp_conf = (answer & 0b00111000) >> 3;
-    *humidity_conf = answer & 0b00000111;
+    *temp_conf = (av_conf_value & 0b00111000) >> 3;
+    *humidity_conf = av_conf_value & 0b00000111;
 
     return 0;
 }
 
-int hts221_set_avg_config(const struct i2c_dt_spec *spec, const hts221_avg_config_t temp_conf,
-                          const hts221_avg_config_t humidity_conf) {
-    const uint8_t regs[2] = {HTS221_AV_CONF, (temp_conf << 3) | humidity_conf};
-    return i2c_write_dt(spec, regs, 2);
+int hts221_set_av_conf(const struct i2c_dt_spec *spec, const hts221_av_conf_t temp_conf,
+                       const hts221_av_conf_t humidity_conf) {
+    return i2c_reg_write_byte_dt(spec, HTS221_AV_CONF, (temp_conf << 3) | humidity_conf);
 }
 
-int hts221_set_active_mode(const struct i2c_dt_spec *spec) {
+int hts221_enable(const struct i2c_dt_spec *spec) {
     uint8_t ctrl_reg1_value;
     int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, &ctrl_reg1_value);
     if (err != 0)
@@ -50,7 +56,7 @@ int hts221_set_active_mode(const struct i2c_dt_spec *spec) {
     return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG1, (ctrl_reg1_value & 0b01111111) | 0b10000000);
 }
 
-int hts221_set_power_down_mode(const struct i2c_dt_spec *spec) {
+int hts221_disable(const struct i2c_dt_spec *spec) {
     uint8_t ctrl_reg1_value;
     int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG1, &ctrl_reg1_value);
     if (err != 0)
@@ -123,7 +129,7 @@ int hts221_read_heater_status(const struct i2c_dt_spec *spec, bool *is_enabled) 
     return 0;
 }
 
-int hts221_start_one_shot_conversion(const struct i2c_dt_spec *spec) {
+int hts221_trigger_one_shot(const struct i2c_dt_spec *spec) {
     uint8_t ctrl_reg2_value;
     int err = i2c_reg_read_byte_dt(spec, HTS221_CTRL_REG2, &ctrl_reg2_value);
     if (err != 0)
@@ -152,7 +158,7 @@ int hts221_enable_data_ready(const struct i2c_dt_spec *spec, const bool enable) 
     return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG3, (ctrl_reg3_value & 0b11111011) | drdy_enable_mask);
 }
 
-int hts221_read_status_reg(const struct i2c_dt_spec *spec, bool *new_humidity_available, bool *new_temp_available) {
+int hts221_read_status(const struct i2c_dt_spec *spec, bool *new_humidity_available, bool *new_temp_available) {
     uint8_t status_reg_value;
     int err = i2c_reg_read_byte_dt(spec, HTS221_STATUS_REG, &status_reg_value);
     if (err != 0)
@@ -163,8 +169,8 @@ int hts221_read_status_reg(const struct i2c_dt_spec *spec, bool *new_humidity_av
     return 0;
 }
 
-int hts221_read_all_config_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf, uint8_t *ctrl_reg1, uint8_t *ctrl_reg2,
-                               uint8_t *ctrl_reg3, uint8_t *status_reg) {
+int hts221_read_all_conf_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf, uint8_t *ctrl_reg1, uint8_t *ctrl_reg2,
+                             uint8_t *ctrl_reg3, uint8_t *status_reg) {
     int err = i2c_reg_read_byte_dt(spec, HTS221_AV_CONF, av_conf);
     if (err != 0)
         return err;
@@ -192,20 +198,20 @@ int hts221_read_all_config_reg(const struct i2c_dt_spec *spec, uint8_t *av_conf,
  * Data Conversion *
  *******************/
 
-int hts221_read_humidity(const struct i2c_dt_spec *spec, uint16_t *humidity) {
-    const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | 0b10000000;
+int hts221_read_humidity(const struct i2c_dt_spec *spec, float *humidity) {
+    const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | HTS221_MULTIPLE_BYTES_READ;
     uint8_t buffer[2];
-    const int err = i2c_burst_read_dt(spec, reg, buffer, 2);
+    const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 2);
     if (err != 0)
         return err;
     *humidity = buffer[1] << 8 | buffer[0];
     return 0;
 }
 
-int hts221_read_temperature(const struct i2c_dt_spec *spec, uint16_t *temperature) {
-    const hts221_reg_t reg = HTS221_TEMP_OUT_L | 0b10000000;
+int hts221_read_temperature(const struct i2c_dt_spec *spec, float *temperature) {
+    const hts221_reg_t reg = HTS221_TEMP_OUT_L | HTS221_MULTIPLE_BYTES_READ;
     uint8_t buffer[2];
-    const int err = i2c_burst_read_dt(spec, reg, buffer, 2);
+    const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 2);
     if (err != 0)
         return err;
     *temperature = buffer[1] << 8 | buffer[0];
@@ -213,7 +219,7 @@ int hts221_read_temperature(const struct i2c_dt_spec *spec, uint16_t *temperatur
 }
 
 int hts221_read_all(const struct i2c_dt_spec *spec, float *humidity, float *temperature) {
-    const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | 0b10000000;
+    const hts221_reg_t reg = HTS221_HUMIDITY_OUT_L | HTS221_MULTIPLE_BYTES_READ;
     uint8_t buffer[4];
     const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 4);
     if (err != 0)
@@ -227,13 +233,24 @@ int hts221_read_all(const struct i2c_dt_spec *spec, float *humidity, float *temp
     return 0;
 }
 
-int hts221_read_conversion_coeff(const struct i2c_dt_spec *spec) {
-    const hts221_reg_t reg = HTS221_CALIB_0 | 0b10000000;
+int hts221_read_calibration(const struct i2c_dt_spec *spec) {
+    const hts221_reg_t reg = HTS221_CALIB_0 | HTS221_MULTIPLE_BYTES_READ;
     uint8_t buffer[16];
     const int err = i2c_write_read_dt(spec, &reg, 1, buffer, 16);
     if (err != 0)
         return err;
 
+    // Humidity
+    conv_coeff.h0_rh_x2 = buffer[0];
+    conv_coeff.h1_rh_x2 = buffer[1];
+    conv_coeff.h0_t0_out = (buffer[7] << 8) | buffer[6];
+    conv_coeff.h1_t0_out = (buffer[9] << 8) | buffer[8];
+
+    conv_coeff.rh_m = (float)(conv_coeff.h1_rh_x2 - conv_coeff.h0_rh_x2) /  //
+                      (float)(conv_coeff.h1_t0_out - conv_coeff.h0_t0_out);
+    conv_coeff.rh_q = (float)(conv_coeff.h1_rh_x2) - (float)conv_coeff.h1_t0_out * conv_coeff.rh_m;
+
+    // Temperature
     conv_coeff.t0_degC_x8 = ((buffer[5] & 0b00000011) << 8) | buffer[2];
     conv_coeff.t1_degC_x8 = ((buffer[5] & 0b00001100) << 6) | buffer[3];
     conv_coeff.t0_out = (buffer[13] << 8) | buffer[12];
