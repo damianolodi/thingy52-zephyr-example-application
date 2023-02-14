@@ -105,8 +105,7 @@ int hts221_set_heater_status(const struct i2c_dt_spec *spec, const bool enable) 
 
     const uint8_t heater_mask = enable ? 0b00000010 : 0b00000000;
 
-    const uint8_t regs[2] = {HTS221_CTRL_REG2, (ctrl_reg2_value & 0b11111101) | heater_mask};
-    return i2c_write_dt(spec, regs, 2);
+    return i2c_reg_write_byte_dt(spec, HTS221_CTRL_REG2, (ctrl_reg2_value & 0b11111101) | heater_mask);
 }
 
 int hts221_read_heater_status(const struct i2c_dt_spec *spec, bool *is_enabled) {
