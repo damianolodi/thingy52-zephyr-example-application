@@ -16,9 +16,14 @@ CONFIGURED_BUILD_DEP = $(BUILDRESULTS)/build.ninja
 OPTIONS ?=
 INTERNAL_OPTIONS =
 
-BUILD_TYPE ?=
+BUILD_TYPE ?= Debug
 ifneq ($(BUILD_TYPE),)
 	INTERNAL_OPTIONS += -DCMAKE_BUILD_TYPE=$(BUILD_TYPE)
+endif
+
+BOARD ?= 
+ifneq ($(BOARD),)
+	INTERNAL_OPTIONS += -DBOARD=$(BOARD)
 endif
 
 all: default
@@ -33,8 +38,7 @@ debug: | $(CONFIGURED_BUILD_DEP)
 
 .PHONY: flash
 flash: default
-	$(Q)nrfjprog -f nrf52 --program $(BUILDRESULTS)/zephyr/zephyr.elf --verify --sectorerase
-	$(Q)nrfjprog -f nrf52 --reset
+	$(Q)ninja -C $(BUILDRESULTS) flash
 
 # Runs whenever the build has not been configured successfully
 $(CONFIGURED_BUILD_DEP):
@@ -54,7 +58,7 @@ rconfig:
 dconfig:
 	make reconfig BUILD_TYPE=Debug
 
-# Manually Reconfigure a target, esp. with new options
+# Manually reconfigure a target, esp. with new options
 .PHONY: reconfig
 reconfig:
 	$(Q) cmake -B $(BUILDRESULTS) $(OPTIONS) $(INTERNAL_OPTIONS)
@@ -65,7 +69,28 @@ clean:
 
 .PHONY: pristine
 pristine:
-	$(Q) if [ -d "$(BUILDRESULTS)" ]; then ninja -C $(BUILDRESULTS) pristine; fi
+	$(Q) rm -rf $(BUILDRESULTS)
+
+#################
+# Board targets #
+#################
+
+.PHONY: thingy52
+thingy52: pristine
+	$(Q)make BOARD="thingy52_nrf52832"
+
+.PHONY: nrf52840dk
+nrf52840dk: pristine
+	$(Q)make BOARD="nrf52840dk_nrf52840"
+
+###################
+# Utility targets #
+###################
+
+# Open the board compiled devicetree file
+.PHONY: dts
+dts:
+	$(Q)code $(BUILDRESULTS)/zephyr/zephyr.dts
 
 .PHONY : help
 help :
@@ -77,11 +102,17 @@ help :
 	@echo "    > BUILD_TYPE Specify the build type (default: RelWithDebInfo)"
 	@echo "			Option are: Debug Release MinSizeRel RelWithDebInfo"
 	@echo "Targets:"
-	@echo "  default: 	builds all default targets ninja knows about"
-	@echo "  flash: 	flash the current board"
-	@echo "  clean: 	cleans build artifacts, keeping build files in place"
-	@echo "  pristine: 	removes the configured build output directory. Keep the log file"
-	@echo "  cc: 		call ccmake in the build directory"
-	@echo "  rconfig: 	change build configuration to Release"
-	@echo "  dconfig: 	change build configuration to Debug"
-	@echo "  reconfig: 	reconfigure an existing build output folder with new settings"
+	@echo "  Main:"
+	@echo "    default: 	builds all default targets ninja knows about"
+	@echo "    flash: 	flash the current board"
+	@echo "    clean: 	cleans build artifacts, keeping build files in place"
+	@echo "    pristine: 	removes the configured build output directory. Keep the log file"
+	@echo "  Configuration:"
+	@echo "    cc: 	call ccmake in the build directory"
+	@echo "    dconfig: 	change build configuration to Debug"
+	@echo "    rconfig: 	change build configuration to Release"
+	@echo "    reconfig: 	reconfigure an existing build output folder with new settings"
+	@echo "  Helpers:"
+	@echo "    thingy52:	pristine build using BOARD=thingy52_nrf52832"
+	@echo "    nrf52840dk:	pristine build using BOARD=nrf52840dk_nrf52840"
+	@echo "    dts:	open the compiled devicetree file for the selected board"

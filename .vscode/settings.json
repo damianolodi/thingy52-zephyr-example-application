@@ -1,7 +1,29 @@
 {
+    // EDITOR -----------------------------------------------------------------
+    "editor.formatOnSave": true,
+    // C/C++ ------------------------------------------------------------------
+    "C_Cpp.clang_format_style": "file",
+    "C_Cpp.clang_format_fallbackStyle": "{BasedOnStyle: Google,IndentWidth: 4, ColumnLimit: 120, AllowShortIfStatementsOnASingleLine: false}",
+    "C_Cpp.intelliSenseEngine": "default",
+    "C_Cpp.codeAnalysis.clangTidy.enabled": true,
+    "C_Cpp.codeAnalysis.runAutomatically": true,
+    // Cortex Debug -----------------------------------------------------------
     "cortex-debug.gdbPath": "/usr/local/lib/zephyr-sdk-0.15.2/arm-zephyr-eabi/bin/arm-zephyr-eabi-gdb",
     "cortex-debug.JLinkGDBServerPath": "/usr/bin/JLinkGDBServer",
+    "cortex-debug.variableUseNaturalFormat": false,
+    // Files ------------------------------------------------------------------
     "files.associations": {
-        "kernel.h": "c"
+        "kernel.h": "c",
+        "log.h": "c",
+        "printk.h": "c",
+        "type_traits": "cpp",
+        "i2c.h": "c",
+        "types.h": "c",
+        "gpio.h": "c",
+        "thread_led.h": "c",
+        "config_hts221.h": "c",
+        "config_log.h": "c",
+        "events.h": "c",
+        "hts221.h": "c"
     },
 }

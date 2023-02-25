@@ -13,10 +13,10 @@
             "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
             "targetId": "nrf52832",
-            "preLaunchTask": "Flash"
+            "preLaunchTask": "Flash",
         },
         {
-            "name": "JLink Debug",
+            "name": "JLink nRF52832 (RTT)",
             "cwd": "${workspaceFolder}",
             "executable": "_build/zephyr/zephyr.elf",
             "request": "launch",
@@ -25,9 +25,20 @@
             "rtos": "Zephyr",
             "device": "nRF52832_xxAA",
             "interface": "swd",
-            "runToEntryPoint": "main",
+            // "runToEntryPoint": "main",
             "showDevDebugOutput": "none",
-            "preLaunchTask": "",
+            // "preLaunchTask": "Flash",
+            "rttConfig": {
+                "enabled": true,
+                "address": "auto",
+                "decoders": [
+                    {
+                        "label": "",
+                        "port": 0,
+                        "type": "console"
+                    }
+                ]
+            }
             // "swoConfig": { // Single Wire Output configuration
             //     "enabled": true,
             //     "cpuFrequency": 0,
@@ -43,6 +54,20 @@
             //         }
             //     ]
             // }
+        },
+        {
+            "name": "JLink nRF52840",
+            "cwd": "${workspaceFolder}",
+            "executable": "_build/zephyr/zephyr.elf",
+            "request": "launch",
+            "type": "cortex-debug",
+            "servertype": "jlink",
+            "rtos": "Zephyr",
+            "device": "nRF52840_xxAA",
+            "interface": "swd",
+            // "runToEntryPoint": "main",
+            "showDevDebugOutput": "none",
+            "preLaunchTask": "Flash",
         }
     ]
 }

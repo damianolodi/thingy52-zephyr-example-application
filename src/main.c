@@ -1,27 +1,23 @@
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
 
-#define SLEEP_TIME_MS 1000
+#include "config_log.h"
+#include "events.h"
+#include "thread_hts221.h"
+#include "thread_led.h"
 
-#define LED0_NODE DT_ALIAS(led0)
+LOG_MODULE_REGISTER(pcs_weather, LOG_LEVEL);
 
-static const struct gpio_dt_spec led = GPIO_DT_SPEC_GET(LED0_NODE, gpios);
+#define BLINK_THREAD_STACKSIZE 1024
+#define HTS221_THREAD_STACKSIZE 1024
+#define BLINK_THREAD_PRIORITY 4
+#define HTS221_THREAD_PRIORITY 4
 
-void main(void) {
-    int ret;
+K_EVENT_DEFINE(events);
 
-    if (!device_is_ready(led.port)) return;
+K_THREAD_DEFINE(blink_thread_id, BLINK_THREAD_STACKSIZE, blink_thread, NULL, NULL, NULL, BLINK_THREAD_PRIORITY, 0, 0);
 
-    ret = gpio_pin_configure_dt(&led, GPIO_OUTPUT_ACTIVE);
-    if (ret < 0) {
-        return;
-    }
-
-    while (1) {
-        ret = gpio_pin_toggle_dt(&led);
-        if (ret < 0) {
-            return;
-        }
-        k_msleep(SLEEP_TIME_MS);
-    }
-}
+K_THREAD_DEFINE(hts221_thread_id, HTS221_THREAD_STACKSIZE, hts221_thread, NULL, NULL, NULL, HTS221_THREAD_PRIORITY, 0,
+                0);

@@ -4,7 +4,14 @@ cmake_minimum_required(VERSION 3.20.0)
 # Process Boards #
 ##################
 
-add_subdirectory(boards)
+list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/prj.conf)
+
+if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
+	list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/debug.conf)
+	add_compile_definitions(DEBUG)
+endif()
+
+include(cmake/select_board.cmake)
 
 #################
 # Build Modules #
@@ -12,12 +19,6 @@ add_subdirectory(boards)
 
 # Define and Process Project Options
 include(BuildOptions.cmake)
-
-list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/prj.conf)
-
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug")
-	list(APPEND CONF_FILE ${CMAKE_CURRENT_SOURCE_DIR}/conf/debug.conf)
-endif()
 
 ##########
 # ZEPHYR #
@@ -43,4 +44,12 @@ project(zephyr-template
 set_property(GLOBAL PROPERTY C_STANDARD 11)
 set_property(GLOBAL PROPERTY CXX_STANDARD 17)
 
-target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE 
+	src/main.c 
+	src/thread_hts221.c 
+	src/thread_led.c
+	src/hts221/hts221.c
+)
+
+target_include_directories(app PRIVATE src)
+target_include_directories(app PRIVATE src src/hts221)
