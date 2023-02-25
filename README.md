@@ -1,170 +1,194 @@
-# Project Title
+# Thingy52 Example Application
 
-Provide an introductory paragraph, describing:
+This repository provides a template for a Zephyr-based application for Nordic's Thingy52.
 
-* What your project does
-* Why people should consider using your project
-* Link to project home page
+The project is designed to be built using the command line. VSCode configuration is provided for debuggers and some C-C++ specific tools. 
+
+It can be a good starting point for people who want to approach embedded programming without the use of an IDE.
 
 ## Table of Contents
 
 1. [About the Project](#about-the-project)
-1. [Project Status](#project-status)
-1. [Getting Started](#getting-started)
+2. [Project Status](#project-status)
+3. [Getting Started](#getting-started)
     1. [Dependencies](#dependencies)
-    1. [Building](#building)
-    1. [Installation](#installation)
-    1. [Usage](#usage)
-1. [Release Process](#release-process)
-    1. [Versioning](#versioning)
-    1. [Payload](#payload)
-1. [How to Get Help](#how-to-get-help)
-1. [Further Reading](#further-reading)
-1. [Contributing](#contributing)
-1. [License](#license)
-1. [Authors](#authors)
-1. [Acknowledgments](#acknowledgements)
+    2. [Building](#building)
+    3. [Usage](#usage)
+4. [Release Process](#release-process)
+5. [How to Get Help](#how-to-get-help)
+6. [Further Reading](#further-reading)
+7. [Contributing](#contributing)
+8. [License](#license)
+9. [Authors](#authors)
+10. [Acknowledgments](#acknowledgements)
 
-# About the Project
+## About the Project
 
-Here you can provide more details about the project
-* What features does your project provide?
-* Short motivation for the project? (Don't be too long winded)
-* Links to the project site
-
-```
-Show some example code to describe what your project does
-Show some of your APIs
-```
+WIP
 
 **[Back to top](#table-of-contents)**
 
-# Project Status
+## Project Status
 
-Show the build status if you have a CI server:
-
-[![Build Status](http://your-server:12345/job/badge/icon)](http://your-server:12345/job/http://your-server:12345/job/badge/icon/)
-
-Describe the current release and any notes about the current state of the project. Examples: currently compiles on your host machine, but is not cross-compiling for ARM, APIs are not set, feature not implemented, etc.
+This project is under active development. It is currently used by myself to explore embedded programming.
 
 **[Back to top](#table-of-contents)**
 
-# Getting Started
+## Getting Started
 
-This section should provide instructions for other developers to
+In the following sections you will find instructions to set-up and use the project.
 
-These instructions will get you a copy of the project up and running on your local machine for development and testing purposes. See deployment for notes on how to deploy the project on a live system.
+### Dependencies
 
-## Dependencies
+The project dependencies are minimal since most of the required software/SDK will be downloaded during setup.
 
-Describe what software and libraries you will need to install in order to build and use this project. Provide details on how to resolve these dependencies.
+Since the project is based on the Zephyr RTOS, the user should follow the [Zephyr's Getting Started Guide](https://docs.zephyrproject.org/latest/develop/getting_started/index.html). The important paragpraph of the guide are *[Install Dependencies](https://docs.zephyrproject.org/latest/develop/getting_started/index.html#install-dependencies)* and *[Install Zephyr SDK](https://docs.zephyrproject.org/latest/develop/getting_started/index.html#install-zephyr-sdk)* since all the other dependencies will be downloaded during project setup in a Python virutal environment.
 
-Remember: `git-lfs` is a dependency that developers will need to resolve before they can get started with a repository using LFS.
+> [!warning]
+> This project is developed and tested only on Ubuntu. It will probably run smoothly on macOS, but I have limited experience in CMake development on Windows.
 
-```
-Examples should be included
-```
+The user should also intall `Make`. On Ubuntu, this is easily done using the command line:
 
-## Getting the Source
-
-Include a link to your GitHub repository (you have no idea how people will find your code), and also a summary of how to clone.
-
-This project is [hosted on GitHub](https://github.com/embeddedartistry/embedded-resources). You can clone this project directly using this command:
-
-```
-git clone git@github.com:embeddedartistry/embedded-resources.git
+```bash
+sudo apt install make
 ```
 
-## Building
+Finally, some hardware is required to run the project correctly:
 
-Instructions for how to build your project
+- One Thingy52.
+- One Nordic's DK that will be used as a debugger (I use the nRF52840 DK).
+- A SWD cable ([like the one provided by Adafruit](https://www.adafruit.com/product/1675)).
 
-```
-Examples should be included
-```
+### Getting the Source
 
-## Running Tests
+The source code of this project is [stored on Github](https://github.com/damianolodi/thingy52-zephyr-example-application). If you are interested in this project I assume you have some experience with the command line.
 
-Describe how to run unit tests for your project.
+The best way to get the project and all the required dependecies is cloning the repository using Zephyr's `west` tool: 
 
-```
-Examples should be included
-```
-
-### Other Tests
-
-If you have formatting checks, coding style checks, or static analysis tests that must pass before changes will be considered, add a section for those and provide instructions
-
-## Installation
-
-Instructions for how to install your project's build artifacts
-
-```
-Examples should be included
+```bash
+# Clone the respository and setup the project structure correctly
+west init -m https://github.com/damianolodi/thingy52-zephyr-example-application.git --mr v1.0.0 thingy52-zephyr-example
 ```
 
-## Usage
+Once the project is cloned, move into the created directory and create a *Python virtual environment*.
 
-Instructions for using your project. Ways to run the program, how to include it in another project, etc.
+```bash
+cd thingy52-zephyr-example
 
+# Create the virutal environment
+python3 -m venv .venv
 ```
-Examples should be included
+
+Finally, activate the viruatl environment and use `west` to install all the project dependencies into that environment.
+
+```bash
+# Activate the virtual environment
+source .venv/bin/activate
+
+# Download all the project dependencies
+west update
 ```
 
-If your project provides an API, either provide details for usage in this document or link to the appropriate API reference documents
+> [!note]
+> From now on, every time you work on the project you need to activate that virtual environment.
+
+#### A Note on Virutal Environments
+
+Using the virutal environement for this project is not strictly necessary. The main reason why it is used is for cross-compatibility with other Zephyr-based projects that use a different RTOS version.
+
+Different RTOS version could have different dependencies. Using virutal environments one isolates dependencies on a project basis and increase compatibility. For this reason, if you plan to work on other Zephyr apps in the future, I strongly suggest to use virutal environments.
+
+### Building
+
+The project build system is based on CMake. Nonetheless, a Makefile is provided as an helper tool to build and debug the application.
+
+The Makefile is commented and all the available targets are described calling `make help`.
+
+To build the project type
+
+```bash
+make
+```
+
+The project will be built selecting the Thingy52 as the target board and in Debug mode. The default build directory is `_build`, but it can be changed either by changing the Makfile or by providing the `BUILDRESULT=<dir_name>` flag when calling Make.
+
+The helper commands `make dconfig` and `make rconfig` will change the build configuration into *Debug* and *Release* respectively.
+
+Finally, `make clean` will clean all the build artifacts while `make pristine` will delete the build folder completely.
+
+### Usage
+
+Once built, the app can be flashed using `make flash`. Before calling the target, connect the Thingy52 to the DK using the SWD cable and connect the DK to the PC using and USB cable. Both boards must be powered on.
+
+#### Debugging
+
+The target `make debug` can be used to debug the application. Nonetheless, I find easier using VSCode for this task. For this reason, the project provide a complete VSCode debug configuration.
+
+> [!important]
+> To run the debugger successfully, activate the Python virtual environment and open VSCode using `code <path-to-project>` from the terminal. This will set correctly all the envoronment variables for VSCode.
+
+You need the following extensions:
+
+- C/C++ (Microsoft)
+- Cortex-Debug (marus25)
+
+All the debug configurations are stored in the `.vscode/launch.json` file. To run the debugger go into the debugger tab, select the right configuration and press F5.
+
+> [!important]
+> At the current version, only the "JLink nRF52832 (RTT)" configuration is tested.
 
 **[Back to top](#table-of-contents)**
 
-# Release Process
+## Release Process
 
-Talk about the release process. How are releases made? What cadence? How to get new releases?
+The git branching strategy is based on [git flow](https://danielkummer.github.io/git-flow-cheatsheet/). Releases are on the `main` branch and will be tagged using the `vX.Y.Z` format.
 
-## Versioning
-
-This project uses [Semantic Versioning](http://semver.org/). For a list of available versions, see the [repository tag list](https://github.com/your/project/tags).
-
-## Payload
+I will push also the `develop` branch, in which my day-to-day experiments are stored. I try to push and commit only working code, but I am not enforcig it with any automation so YMMV.
 
 **[Back to top](#table-of-contents)**
 
-# How to Get Help
+## How to Get Help
 
-Provide any instructions or contact information for users who need to get further help with your project.
+If you need help please contact me through one of my social media or through my website. I will try to help and clarify any doubts.
 
-# Contributing
+Please use the issue trucker only for bugs.
 
-Provide details about how people can contribute to your project. If you have a contributing guide, mention it here. e.g.:
+## Contributing
 
-We encourage public contributions! Please review [CONTRIBUTING.md](docs/CONTRIBUTING.md) for details on our code of conduct and development process.
+At the time of writing, I do not accept external contribution or pull requests. This is a personal project and I simply want to share it with other enthusiasts.
 
-**[Back to top](#table-of-contents)**
-
-# Further Reading
-
-Provide links to other relevant documentation here
+Nonethelss, feel free to contact me about any idea you have for a possible development or improvement in the project. I will be happy to discuss anything with you.
 
 **[Back to top](#table-of-contents)**
 
-# License
+## Further Reading
 
-Copyright (c) 2020 Embedded Artistry LLC
+Some related documentation you can find useful:
+
+- [Zephyr documentation](https://docs.zephyrproject.org/latest/index.html)
+- [nRF Connect SDK documentation](https://developer.nordicsemi.com/nRF_Connect_SDK/doc/latest/nrf/introduction.html)
+- [CMake documentation](https://cmake.org/cmake/help/latest/)
+
+**[Back to top](#table-of-contents)**
+
+## License
+
+Copyright (c) 2023 Damiano Lodi
 
 This project is licensed under the MIT License - see [LICENSE.md](LICENSE.md) file for details.
 
 **[Back to top](#table-of-contents)**
 
-# Authors
+## Authors
 
-* **[Phillip Johnston](https://github.com/phillipjohnston)** - *Initial work* - [Embedded Artistry](https://github.com/embeddedartistry)
-
-See also the list of [contributors](https://github.com/your/project/contributors) who participated in this project.
+* **[Damiano Lodi](https://github.com/damianolodi)** - *Initial work*
 
 **[Back to top](#table-of-contents)**
 
-# Acknowledgments
+## Acknowledgments
 
-Provide proper credits, shout-outs, and honorable mentions here. Also provide links to relevant repositories, blog posts, or contributors worth mentioning.
+The current README is based on the template from [Embedded Artistry Template](https://github.com/embeddedartistry/templates/blob/master/oss_docs/README.md).
 
-Give proper credits. This could be a link to any repository which inspired you to build this project, any blog posts or links to people who contributed in this project. If you used external code, link to the original source.
+The *Makefile* shim and CMake project structures are inspired by [Embedded Artistry's CMake course](https://embeddedartistry.com/course/creating-a-cross-platform-build-system-for-embedded-projects-with-cmake/).
 
 **[Back to top](#table-of-contents)**
